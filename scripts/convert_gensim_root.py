@@ -4,9 +4,9 @@ from argparse import ArgumentParser
 
 import ROOT as rt
 from DataFormats.FWLite import Events, Handle
-
-from tqdm import tqdm
 from array import array
+
+from printing_utils import *
 rt.gROOT.SetBatch(1)
 
 
@@ -23,12 +23,12 @@ args = parser.parse_args()
 
 def main():
     
-    print '--> Starting GENSIM -> ROOT conversion.'
+    print(green('--> Starting GENSIM -> ROOT conversion.'))
     
     # Load input files
     existing_files = get_existing_files_from_list(infilenames=args.infilenames)
     events = Events(existing_files)
-    print '  --> Loaded %i files.' % (len(existing_files))
+    print(green('  --> Loaded %i files.' % (len(existing_files))))
 
     # Prepare output file
     file_root = rt.TFile(args.outfilename, 'RECREATE')
@@ -54,7 +54,7 @@ def main():
     # Start the event loop!
     ie = 0
     for e in events:
-        if ie%1000 == 0: print '  --> New event no. %i' % (ie)
+        if ie%1000 == 0: print(blue('  --> New event no. %i' % (ie)))
         ie += 1
 
         e.getByLabel(label_gps,handle_gps)
@@ -63,8 +63,7 @@ def main():
         # Access the gen-particles 
         gps_hard       = [p for p in gps if p.isHardProcess()]
         tau_hard       = [p for p in gps_hard if abs(p.pdgId()) == 15]
-        tau_hard_final = [p for p in tau_hard if isFinal(p)]
-        tau_hard_final.sort(key=lambda p: p.pt(), reverse=True)
+        tau_hard.sort(key=lambda p: p.pt(), reverse=True)
         # mu_final = [p for p in gps if isFinal(p) and abs(p.pdgId()) == 13 and p.status() == 1]
         # mu_final.sort(key=lambda p: p.pt(), reverse=True)
     
@@ -72,15 +71,15 @@ def main():
         tau1 = rt.TLorentzVector()
 
         # Fill the 4-momentum vector and the individual branches of the tree
-        if len(tau_hard_final) > 0: 
-            tau1.SetPxPyPzE(tau_hard_final[0].p4().Px(), tau_hard_final[0].p4().Py(), tau_hard_final[0].p4().Pz(), tau_hard_final[0].p4().E())
-          tau1_pt[0]   = tau1.Pt()
-          tau1_eta[0]  = tau1.Eta()
-          tau1_phi[0]  = tau1.Phi()
-          tau1_e[0]    = tau1.E()
-          tau1_charge[0]= -1. if tau_hard_final[0].pdgId() > 0 else +1.
+        if len(tau_hard) > 0: 
+            tau1.SetPxPyPzE(tau_hard[0].p4().Px(), tau_hard[0].p4().Py(), tau_hard[0].p4().Pz(), tau_hard[0].p4().E())
+            tau1_pt[0]   = tau1.Pt()
+            tau1_eta[0]  = tau1.Eta()
+            tau1_phi[0]  = tau1.Phi()
+            tau1_e[0]    = tau1.E()
+            tau1_charge[0]= -1. if tau_hard[0].pdgId() > 0 else +1.
 
-        n_tau[0] = len(tau_hard_final)
+        n_tau[0] = len(tau_hard)
 
         # Finally, store all variables in the tree for this event, on to the next one.
         outtree.Fill()
@@ -91,8 +90,8 @@ def main():
     outtree.Write()
     file_root.Close()
 
-    print '--> Output written to: %s' % (args.outfilename)
-    print '--> Done with GENSIM -> ROOT conversion.'
+    print(green('--> Output written to: %s' % (args.outfilename)))
+    print(green('--> Done with GENSIM -> ROOT conversion.'))
 
 
 
@@ -102,13 +101,13 @@ def main():
 
 def get_existing_files_from_list(infilenames):
     existing_files = []
-        for idx in range(len(infilenames)):
+    for idx in range(len(infilenames)):
         try:
             f = rt.TFile.Open(infilenames[idx], 'READ')
             f.Close()
             existing_files.append(infilenames[idx])
         except:
-            print '  --> In the given list of input files, this one does not exist: %s' % (infilenames[idx])
+            print(yellow('  --> In the given list of input files, this one does not exist: %s' % (infilenames[idx])))
     return existing_files
 
 def isFinal(p):
