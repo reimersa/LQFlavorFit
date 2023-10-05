@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from argparse import ArgumentParser
 import ROOT
 from tdrstyle_all import *
 from printing_utils import *
@@ -10,13 +11,29 @@ import subprocess
 import copy
 
 
+description = 'Steering script'
+parser = ArgumentParser(prog="workspaces",description=description,epilog="Finished successfully!")
+parser.add_argument('-s', "--submit",      dest="submit", default=False, action='store_true',
+                                           help="Actually submit/run" )
+parser.add_argument('-r', "--resubmit",    dest="resubmit", default=False, action='store_true',
+                                           help="resubmit crashed conversion jobs" )
+parser.add_argument('-c', "--convert",     dest="convert", default=False, action='store_true',
+                                           help="(re)submit conversion jobs to the cluster" )
+parser.add_argument('-p', "--plot",        dest="plot", default=False, action='store_true',
+                                           help="plot from converted files" )
+args = parser.parse_args()
+if args.convert and args.plot:
+    raise ValueError('Cannot do conversion AND plotting in the same step')
+if not (args.convert or args.plot):
+    raise ValueError('Must do either conversion or plotting, what else am I supposed to do?')
+
 
 def main():
     print(green('--> Hello from the steer script!'))
 
     # Define the settings
     samplenames  = ['LQTChannel_BBTauTau_MLQ1000_L1p0']
-    resubmit     = True
+    resubmit     = args.resubmit
 
     # Samples that Arne generated
     gensimfolder_base    = 'root://storage01.lcg.cscs.ch//pnfs/lcg.cscs.ch/cms/trivcat/store/user/areimers/GENSIM/UL17/LQFlavorFit'
@@ -34,8 +51,16 @@ def main():
     ensureDirectory(commandfolder)
     ensureDirectory(logfolder)
 
-    # convert(gensimfolder_base=gensimfolder_base, gensim_filename_base=gensim_filename_base, filefolder=filefolder, scriptfolder=scriptfolder, commandfolder=commandfolder, logfolder=logfolder, samplenames=samplenames, nfiles=nfiles_gensim, resubmit=resubmit)
-    plot(filefolder=filefolder, plotfolder=plotfolder, samplenames=samplenames)
+    if args.submit:
+        if args.convert:
+            convert(gensimfolder_base=gensimfolder_base, gensim_filename_base=gensim_filename_base, filefolder=filefolder, scriptfolder=scriptfolder, commandfolder=commandfolder, logfolder=logfolder, samplenames=samplenames, nfiles=nfiles_gensim, resubmit=resubmit)
+        if args.plot:
+            plot(filefolder=filefolder, plotfolder=plotfolder, samplenames=samplenames)
+    else:
+        if args.convert:
+            print(yellow('  --> Would run the conversion step now, set \'-s\' to actually run and \'-r\' to resubmit failed jobs only'))
+        if args.plot:
+            print(yellow('  --> Would run the plotting step now, set \'-s\' to actually run'))
 
 
     print(green('--> All done in the steer script, bye!'))
