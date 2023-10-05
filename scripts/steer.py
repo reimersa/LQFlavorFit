@@ -71,12 +71,13 @@ def main():
 def convert(gensimfolder_base, gensim_filename_base, filefolder, scriptfolder, commandfolder, logfolder, samplenames, nfiles, resubmit=False):
     for sn in samplenames:
         gensimfolder = os.path.join(gensimfolder_base, sn)
+        ensureDirectory(os.path.join(filefolder, sn))
+        
         commands = []
         commands_resubmit = []
         for ifile in range(1, nfiles+1):
             infilename = os.path.join(gensimfolder, '%s_%i.root' % (gensim_filename_base, ifile))
             outfilename = os.path.join(filefolder, sn, 'ntuple_%i.root' % (ifile))
-            ensureDirectory(filefolder, sn)
             command = '%s/convert_gensim_root.py -i %s -o %s' % (scriptfolder, infilename, outfilename)
             commands.append(command)
 
