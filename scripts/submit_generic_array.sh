@@ -3,7 +3,6 @@
 #SBATCH --account=t3
 #SBATCH -e %x-%A-%a.log
 #SBATCH -o %x-%A-%a.log
-#SBATCH --export NONE
 
 echo USER:                $USER
 echo SLURM_JOB_ID:        $SLURM_JOB_ID
